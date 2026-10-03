@@ -79,7 +79,7 @@ bool QueueVisualizerEntry::init(LevelCommentOptions data) {
     mainNodeLabel->setAlignment(geode::Label::Alignment::Left);
     this->addChildAtPosition(mainNodeLabel, Anchor::TopLeft, {10, -9});
 
-    auto secondaryNodeLabel = geode::Label::create(fmt::format("{}: #{}", data.m_creatorName, data.m_levelID), "mdFont.fnt");
+    auto secondaryNodeLabel = geode::Label::create(fmt::format("{}: #{}", data.m_creatorName, data.m_levelID), "geode.loader/mdFont.fnt");
     secondaryNodeLabel->setID("secondary-label");
     secondaryNodeLabel->setZOrder(10);
     secondaryNodeLabel->setColor({ 150, 150, 150 });
@@ -89,7 +89,7 @@ bool QueueVisualizerEntry::init(LevelCommentOptions data) {
     this->addChildAtPosition(secondaryNodeLabel, Anchor::TopLeft, {11, -37});
 
     if (data.m_persistent) {
-        auto persistentNodeLabel = geode::Label::create("persistent", "mdFont.fnt");
+        auto persistentNodeLabel = geode::Label::create("persistent", "geode.loader/mdFont.fnt");
         persistentNodeLabel->setID("persistent-label");
         persistentNodeLabel->setZOrder(10);
         persistentNodeLabel->setColor({ 201, 77, 201 });

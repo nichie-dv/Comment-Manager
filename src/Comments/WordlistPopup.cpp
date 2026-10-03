@@ -51,7 +51,7 @@ bool WordlistEntry::init(BannedWord data) {
     
 
 
-    auto label = geode::Label::create(this->m_data.m_word.c_str(), "mdFontB.fnt");
+    auto label = geode::Label::create(this->m_data.m_word.c_str(), "geode.loader/mdFontB.fnt");
     label->setID("node-word-label");
     label->setZOrder(7);
     label->setAnchorPoint({0, 0.5f});
@@ -342,7 +342,7 @@ bool NewWordPopup::init(WordlistPopup* popup) {
 
 
     //input
-    auto textInput = geode::TextInput::create(100, "...", "mdFontB.fnt");
+    auto textInput = geode::TextInput::create(100, "...", "geode.loader/mdFontB.fnt");
     textInput->setID("text-input");
     textInput->setZOrder(10);
     textInput->setFilter("qwertyuiopasdfghjklzxcvbnmQWERTYUIOPASDFGHJKLZXCVBNM1234567890-=+_;':\"`~!@#$%^&*()<>?,./\\|[]{}");

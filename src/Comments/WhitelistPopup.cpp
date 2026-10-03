@@ -50,14 +50,14 @@ bool WhitelistEntry::init(WhitelistedItem data) {
 
 
 
-    auto label = geode::Label::create(this->m_data.m_username.c_str(), "mdFontB.fnt");
+    auto label = geode::Label::create(this->m_data.m_username.c_str(), "geode.loader/mdFontB.fnt");
     label->setID("node-username-label");
     label->setZOrder(7);
     label->setAnchorPoint({0, 0.5f});
     label->setLimitLabelWidth(145, 0.9f);
     this->addChildAtPosition(label, Anchor::Left, {10, 0});
 
-    auto idLabel = geode::Label::create(fmt::format("#{}", this->m_data.m_accountID).c_str(), "mdFontB.fnt");
+    auto idLabel = geode::Label::create(fmt::format("#{}", this->m_data.m_accountID).c_str(), "geode.loader/mdFontB.fnt");
     idLabel->setID("node-account-id-label");
     idLabel->setZOrder(7);
     idLabel->setAnchorPoint({1, 0.5f});
@@ -376,7 +376,7 @@ bool NewWhitelistUserPopup::init(WhitelistPopup* popup) {
 
 
     //Username input
-    this->m_usernameInput = geode::TextInput::create(140, "Username", "mdFontB.fnt");
+    this->m_usernameInput = geode::TextInput::create(140, "Username", "geode.loader/mdFontB.fnt");
     this->m_usernameInput->setID("username-input");
     this->m_usernameInput->setZOrder(10);
     this->m_usernameInput->setCommonFilter(CommonFilter::Name);
@@ -402,7 +402,7 @@ bool NewWhitelistUserPopup::init(WhitelistPopup* popup) {
     this->m_buttonMenu->addChildAtPosition(usernameSearchButton, Anchor::Center, {80, 35});
 
     //Account ID input
-    this->m_accountIDInput = geode::TextInput::create(140, "Account ID", "mdFontB.fnt");
+    this->m_accountIDInput = geode::TextInput::create(140, "Account ID", "geode.loader/mdFontB.fnt");
     this->m_accountIDInput->setID("account-id-input");
     this->m_accountIDInput->setZOrder(10);
     this->m_accountIDInput->setCommonFilter(CommonFilter::Uint);
@@ -666,7 +666,7 @@ void FriendPickerPopup::populate(CCArray* friends) {
         bg->setContentSize(row->getContentSize());
         row->addChildAtPosition(bg, Anchor::Center);
 
-        auto label = geode::Label::create(std::string(score->m_userName), "mdFontB.fnt");
+        auto label = geode::Label::create(std::string(score->m_userName), "geode.loader/mdFontB.fnt");
         label->setID("label");
         label->setAnchorPoint({0, 0.5f});
         label->setLimitLabelWidth(150, 0.8f);

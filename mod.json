@@ -8,7 +8,7 @@
 	},
 	"id": "nichie.comment-manager",
 	"name": "Comment Manager",
-	"version": "v1.0.0",
+	"version": "v1.0.1",
 	"developer": "nichie",
 	"description": "Goodbye daily comments",
 	"dependencies": {
