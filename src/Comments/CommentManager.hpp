@@ -107,8 +107,10 @@ protected:
     std::atomic<bool> m_cancelCurrent = false;
     std::atomic<bool> m_wakeQueue = false;
 
-    //empty between processings
+    //empty between processings, filled on the main thread by the delegate and read by the queue
+    std::mutex m_commentsMutex;
     std::vector<CustomCommentData> m_currentComments;
+    std::string m_expectedCommentKey; //Responses for any other page (ex. the comment list being refreshed) are ignored
     std::atomic<bool> m_lastPageEmpty = false;
     std::atomic<bool> m_tempFilled = false;
 

@@ -189,14 +189,16 @@ struct matjson::Serialize<LevelCommentOptions> {
 
 
 
+//Plain copy of a GJComment, GD frees the originals whenever the comment list is refreshed
 struct CustomCommentData {
-   GJComment* m_comment;
-   int64_t m_unixDate = 0;
+    int m_commentID, m_accountID, m_userID;
+    std::string m_username, m_content, m_uploadDate;
+    int64_t m_unixDate = 0;
 
     //GD only gives a relative age like "5 hours" or "2 years", so this is approximate
     //(months/years are treated as 30/365 days)
     void convertDateToUnix() {
-        std::string age = this->m_comment->m_uploadDate;
+        std::string const& age = this->m_uploadDate;
 
         int64_t amount = 0;
         auto [ptr, ec] = std::from_chars(age.data(), age.data() + age.size(), amount);

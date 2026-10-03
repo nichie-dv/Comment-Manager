@@ -841,8 +841,13 @@ arc::Future<bool> CommentManager::runQueueOnceInBackground() {
             log::debug("Attempting to fetch page {}", index);
 
             this->m_tempFilled = false;
-            queueInMainThread([levelID = item.m_levelID, index] {
-                GameLevelManager::get()->getLevelComments(levelID, index, 0, 0, CommentKeyType::Level);
+            queueInMainThread([this, levelID = item.m_levelID, index] {
+                auto GLM = GameLevelManager::get();
+                {
+                    std::lock_guard lock(this->m_commentsMutex);
+                    this->m_expectedCommentKey = GLM->getCommentKey(levelID, index, 0, CommentKeyType::Level);
+                }
+                GLM->getLevelComments(levelID, index, 0, 0, CommentKeyType::Level);
             });
 
             if (co_await this->isCommentPageEmpty()) break;
@@ -856,9 +861,15 @@ arc::Future<bool> CommentManager::runQueueOnceInBackground() {
         //reset delegate
         if (GLM->m_levelCommentDelegate == this) GLM->m_levelCommentDelegate = nullptr;
 
+        //Take the fetched comments so late responses can't touch the list while it's being processed
+        std::vector<CustomCommentData> comments;
+        {
+            std::lock_guard lock(this->m_commentsMutex);
+            comments = std::exchange(this->m_currentComments, {});
+            this->m_expectedCommentKey.clear();
+        }
 
-
-        this->m_progressItem->m_tToDo = this->m_currentComments.size();
+        this->m_progressItem->m_tToDo = comments.size();
         if (!this->m_cancelCurrent) log::debug("Starting processing for {}", item.m_levelID);
 
         //Settings may have been changed since the queue was copied
@@ -875,31 +886,25 @@ arc::Future<bool> CommentManager::runQueueOnceInBackground() {
         bool loggedRunHeader = false;
 
         index = 0;
-        for (auto comment : this->m_currentComments) {
+        for (auto const& comment : comments) {
             if (this->m_cancelCurrent) break;
 
-            //Custom conversion
             auto uploadDate = comment.m_unixDate;
-
-            //Level comments keep the author's info in m_userScore, not on the comment itself (cool)
-            auto userScore = comment.m_comment->m_userScore;
-
-            auto accountID = userScore ? userScore->m_accountID : comment.m_comment->m_accountID;
-            auto userID = comment.m_comment->m_userID;
-            auto username = userScore ? userScore->m_userName : comment.m_comment->m_userName;
-
-            auto commentID = comment.m_comment->m_commentID;
-            auto commentData = comment.m_comment->m_commentString;
+            auto accountID = comment.m_accountID;
+            auto userID = comment.m_userID;
+            auto const& username = comment.m_username;
+            auto commentID = comment.m_commentID;
+            auto const& commentData = comment.m_content;
 
             log::debug(
                 "Processing comment {}/{}\n"
                 "  ID: {} | Uploaded: {} ({} ago)\n"
                 "  User: {} (account {}, user {})\n"
                 "  Content: {}",
-                index + 1, this->m_currentComments.size(),
-                commentID, uploadDate, std::string(comment.m_comment->m_uploadDate),
-                std::string(username), accountID, userID,
-                std::string(commentData)
+                index + 1, comments.size(),
+                commentID, uploadDate, comment.m_uploadDate,
+                username, accountID, userID,
+                commentData
             );
 
             index++;
@@ -910,7 +915,7 @@ arc::Future<bool> CommentManager::runQueueOnceInBackground() {
             if (!reason) continue;
 
             if (item.m_keepLogs) {
-                log::debug("Deleting comment {} by {} ({}): {}", commentID, std::string(username), *reason, std::string(commentData));
+                log::debug("Deleting comment {} by {} ({}): {}", commentID, username, *reason, commentData);
 
                 //Run header in file, once per queue request
                 if (!loggedRunHeader) {
@@ -921,8 +926,8 @@ arc::Future<bool> CommentManager::runQueueOnceInBackground() {
                 //append log
                 appendCommentLog(item.m_levelID, fmt::format(
                     "[{}] #{} by {} (account {}, user {}) | posted ~{} ago | {}\n    {}",
-                    logTimestamp(), commentID, std::string(username), accountID, userID,
-                    std::string(comment.m_comment->m_uploadDate), *reason, std::string(commentData)
+                    logTimestamp(), commentID, username, accountID, userID,
+                    comment.m_uploadDate, *reason, commentData
                 ));
             }
 
@@ -946,7 +951,6 @@ arc::Future<bool> CommentManager::runQueueOnceInBackground() {
         }
 
         //Flush storage
-        this->m_currentComments.clear();
         delete this->m_progressItem;
         this->m_progressItem = nullptr;
 
@@ -998,17 +1002,34 @@ arc::Future<bool> CommentManager::isCommentPageEmpty() {
 }
 
 void CommentManager::loadCommentsFinished(CCArray* comments, char const* key) {
+    std::lock_guard lock(this->m_commentsMutex);
+    if (!key || this->m_expectedCommentKey != key) return; //Not the page asked for
+
     this->m_lastPageEmpty = !comments || comments->count() == 0;
     for (auto comment : CCArrayExt<GJComment*>(comments)) {
-        CustomCommentData data{comment};
+        //Level comments keep the author's info in m_userScore, not on the comment itself (cool)
+        auto userScore = comment->m_userScore;
+
+        CustomCommentData data{
+            comment->m_commentID,
+            userScore ? userScore->m_accountID : comment->m_accountID,
+            comment->m_userID,
+            userScore ? userScore->m_userName : comment->m_userName,
+            comment->m_commentString,
+            comment->m_uploadDate
+        };
         data.convertDateToUnix();
-        this->m_currentComments.push_back(data);
+        this->m_currentComments.push_back(std::move(data));
     }
     this->m_tempFilled = true;
 }
 
 void CommentManager::loadCommentsFailed(char const* key) {
-    log::info("No more comment pages ({})", key ? key : "");
+    {
+        std::lock_guard lock(this->m_commentsMutex);
+        if (!key || this->m_expectedCommentKey != key) return;
+    }
+    log::info("No more comment pages ({})", key);
     this->m_lastPageEmpty = true;
     this->m_tempFilled = true;
 }
