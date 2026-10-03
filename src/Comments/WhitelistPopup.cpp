@@ -267,7 +267,7 @@ bool WhitelistPopup::init(CommentManagerPopup* parent) {
 void WhitelistPopup::addNewEntry(WhitelistEntry* entry) {
     auto* data = entry->getData();
     for (auto* existing : this->m_whitelist) {
-        if (existing->m_accountID == data->m_accountID) return; // duplicate, skip entirely
+        if (existing->m_accountID == data->m_accountID) return; //duplicate, skip entirely
     }
 
     this->m_whitelist.push_back(data);
@@ -276,7 +276,7 @@ void WhitelistPopup::addNewEntry(WhitelistEntry* entry) {
 }
 
 void WhitelistPopup::removeEntry(WhitelistEntry* entry) {
-    std::erase(this->m_whitelist, entry->getData()); // before the node dies
+    std::erase(this->m_whitelist, entry->getData()); //before the node dies
     entry->removeFromParentAndCleanup(true);
 }
 
