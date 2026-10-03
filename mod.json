@@ -1,0 +1,68 @@
+{
+	"geode": "5.10.1",
+	"gd": {
+		"win": "2.2081",
+		"android": "2.2081",
+		"mac": "2.2081",
+		"ios": "2.2081"
+	},
+	"id": "nichie.comment-manager",
+	"name": "Comment Manager",
+	"version": "v1.0.0",
+	"developer": "nichie",
+	"description": "Goodbye daily comments",
+	"dependencies": {
+		"geode.node-ids": ">=v1.23.3"
+	},
+	"settings": {
+		"open-queue-keybind": {
+			"type": "keybind",
+			"name": "Open Queue",
+			"description": "Opens the queue visualizer from anywhere.",
+			"default": ["Ctrl+K"],
+			"category": "universal"
+		},
+		"queue-update-notifications": {
+			"type": "bool",
+			"name": "Show Queue Update Notifcations",
+			"description": "Show updates on queue progress regularly. May be a little repetitve if you don't care about them.",
+			"default": true
+		},
+		"comment-delete-timeout": {
+			"type": "float",
+			"name": "Comment Delete Delay",
+			"description": "The delay (seconds) between deleting comments. The minimum is technically ~1.667⅔ requests per second (or ~0.667 seconds between each item), but for safety this is rounded up to 1 second.",
+			"default": 1.25,
+			"min": 1.0,
+			"max": 200.0,
+			"control": {
+				"slider": true
+			}
+		},
+		"queue-item-timeout": {
+			"type": "float",
+			"name": "Queue Process Delay",
+			"description": "The delay (seconds) between processing each level in queue. This option is not very necessary, but you can use it if needed.",
+			"default": 5.0,
+			"min": 1.0,
+			"max": 200.0,
+			"control": {
+				"slider": true
+			}
+		},
+		"queue-timeout": {
+			"type": "float",
+			"name": "Queue Schedule Delay",
+			"description": "The delay (seconds) between rescheduling the queue. Useful for levels with disabled comments.",
+			"default": 5.0,
+			"min": 5.0,
+			"max": 18000.0,
+			"control": {
+				"slider": true
+			}
+		}
+	},
+	"resources": {
+		"sprites": ["resources/sprites/N_deleteAllBtn_01.png"]
+	}
+}
