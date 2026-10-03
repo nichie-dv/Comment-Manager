@@ -645,11 +645,6 @@ arc::Future<void> CommentManager::processQueue() {
 
 
 namespace {
-    std::string toLower(std::string str) {
-        std::transform(str.begin(), str.end(), str.begin(), [](unsigned char c) { return std::tolower(c); });
-        return str;
-    }
-
     //ex: "2026-09-27 17:29:15"
     std::string logTimestamp() {
         std::time_t now = std::time(nullptr);
@@ -696,6 +691,8 @@ public:
             auto flags = std::regex::ECMAScript;
             if (!options.m_caseSensitive) flags |= std::regex::icase;
 
+
+            //Given the OK by 2 index staff to do this
             try {
                 this->m_regex.emplace(options.m_regex, flags);
             } catch (std::regex_error const& e) {
@@ -706,7 +703,7 @@ public:
         //Wordlist
         for (auto const& word : options.m_wordlist) {
             if (!word.m_enabled || word.m_word.empty()) continue;
-            this->m_words.push_back(options.m_caseSensitive ? word.m_word : toLower(word.m_word));
+            this->m_words.push_back(options.m_caseSensitive ? word.m_word : geode::utils::string::toLower(word.m_word));
         }
     }
 
@@ -740,7 +737,7 @@ public:
         }
         //Wordlist
         else if (this->m_options.m_useWordlist) {
-            auto haystack = this->m_options.m_caseSensitive ? content : toLower(content);
+            auto haystack = this->m_options.m_caseSensitive ? content : geode::utils::string::toLower(content);
             for (auto const& word : m_words) {
                 if (haystack.find(word) != std::string::npos) return fmt::format("banned word '{}'", word);
             }
