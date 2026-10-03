@@ -235,16 +235,21 @@ void QueueVisualizerEntry::playRemoveAnimation(ccColor3B color, std::string cons
     this->m_removeIcon->setScale(0);
     this->addChildAtPosition(this->m_removeIcon, Anchor::Center);
 
+    //The icon pops in with a slight overshoot near the end of the shrink
+    //(run directly on the icon since CCTargetedAction isn't exported on iOS)
+    constexpr float iconPopTime = 0.25f;
+    this->m_removeIcon->runAction(CCSequence::create(
+        CCDelayTime::create(textFadeTime + shrinkTime * 0.7f),
+        CCEaseBackOut::create(CCScaleTo::create(iconPopTime, 1)),
+        nullptr
+    ));
+
     this->runAction(CCSequence::create(
         CCActionTween::create(textFadeTime, "content-opacity", 255, 0),
-        //The empty card shrinks into a square, and the icon pops in with a slight overshoot near the end
+        //The empty card shrinks into a square while the icon pops in
         CCSpawn::create(
             CCActionTween::create(shrinkTime, "shrink", 0, 1),
-            CCSequence::create(
-                CCDelayTime::create(shrinkTime * 0.7f),
-                CCTargetedAction::create(this->m_removeIcon, CCEaseBackOut::create(CCScaleTo::create(0.25f, 1))),
-                nullptr
-            ),
+            CCDelayTime::create(shrinkTime * 0.7f + iconPopTime),
             nullptr
         ),
         CCDelayTime::create(holdTime),
