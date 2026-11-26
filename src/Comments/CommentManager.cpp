@@ -10,6 +10,7 @@ using namespace geode::prelude;
 #include "AdvancedSettingsPopup.hpp"
 
 #include "Enums.hpp"
+#include "../Util/GLMCompat.hpp"
 
 #include <algorithm>
 #include <cctype>
@@ -762,43 +763,73 @@ private:
 
 
 
+//Receives the blocked list from GameLevelManager. Kept alive by a shared_ptr until it's detached as the delegate
+class BlockedListRequest : public UserListDelegate {
+public:
+    std::unordered_set<int> m_accounts;
+    std::atomic<bool> m_done = false;
+
+    //Main thread only
+    void collect(CCArray* list) {
+        if (list) {
+            for (auto user : CCArrayExt<GJUserScore*>(list)) this->m_accounts.insert(user->m_accountID);
+        }
+        this->m_done = true;
+    }
+
+    //Main thread only
+    void detach() {
+        auto GLM = GameLevelManager::get();
+        if (GLM->m_userListDelegate == this) GLM->m_userListDelegate = nullptr;
+    }
+
+    void getUserListFinished(CCArray* scores, UserListType type) override {
+        if (type != UserListType::Blocked) return;
+        this->detach();
+        this->collect(scores);
+    }
+
+    void getUserListFailed(UserListType type, GJErrorCode errorType) override {
+        if (type != UserListType::Blocked) return;
+        this->detach();
+        //NotFound just means nobody is blocked
+        if (errorType != GJErrorCode::NotFound) log::warn("Couldn't load the blocked users list, blocked users won't be deleted");
+        this->collect(nullptr);
+    }
+
+    void userListChanged(CCArray*, UserListType) override {}
+    void forceReloadList(UserListType) override {}
+};
+
 arc::Future<std::unordered_set<int>> CommentManager::getBlockedAccounts() {
-    struct State {
-        std::unordered_set<int> accounts;
-        std::atomic<bool> done = false;
-    };
-    auto state = std::make_shared<State>();
+    auto request = std::make_shared<BlockedListRequest>();
 
-    auto check = [state](bool requestIfMissing) {
-        queueInMainThread([state, requestIfMissing] {
-            auto GLM = GameLevelManager::get();
-            auto list = GLM->getStoredUserList(UserListType::Blocked);
-            if (!list) {
-                if (requestIfMissing) GLM->getUserList(UserListType::Blocked);
-                return;
-            }
+    queueInMainThread([request] {
+        auto GLM = GameLevelManager::get();
+        if (auto list = glm_compat::getStoredUserList(UserListType::Blocked)) {
+            request->collect(list);
+            return;
+        }
 
-            for (auto user : CCArrayExt<GJUserScore*>(list)) state->accounts.insert(user->m_accountID);
-            state->done = true;
-        });
-    };
-
-    check(true);
+        GLM->m_userListDelegate = request.get();
+        GLM->getUserList(UserListType::Blocked);
+    });
 
     int waited = 0;
-    while (!state->done) {
+    while (!request->m_done) {
         if (waited >= static_cast<int>(this->m_pageResponseTimeout * 1000)) {
             log::warn("Couldn't load the blocked users list, blocked users won't be deleted");
+            //Lambda keeps the request alive until it's no longer the delegate
+            queueInMainThread([request] { request->detach(); });
             co_return std::unordered_set<int>{};
         }
 
         co_await arc::sleep(asp::Duration::fromMillis(500));
         waited += 500;
-        check(false);
     }
 
-    log::debug("Loaded {} blocked users", state->accounts.size());
-    co_return state->accounts;
+    log::debug("Loaded {} blocked users", request->m_accounts.size());
+    co_return request->m_accounts;
 }
 
 
@@ -850,7 +881,7 @@ arc::Future<bool> CommentManager::runQueueOnceInBackground() {
                 auto GLM = GameLevelManager::get();
                 {
                     std::lock_guard lock(this->m_commentsMutex);
-                    this->m_expectedCommentKey = GLM->getCommentKey(levelID, index, 0, CommentKeyType::Level);
+                    this->m_expectedCommentKey = glm_compat::getCommentKey(levelID, index, 0, CommentKeyType::Level);
                 }
                 GLM->getLevelComments(levelID, index, 0, 0, CommentKeyType::Level);
             });

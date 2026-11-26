@@ -8,6 +8,7 @@ using namespace geode::prelude;
 
 #include "../Util/OptionsSaveLoad.hpp"
 #include "../Util/Structures.hpp"
+#include "../Util/GLMCompat.hpp"
 
 //Entry
 
@@ -616,7 +617,7 @@ bool CMFriendPickerPopup::init(std::function<void(GJUserScore*)> callback) {
 
     //Use the cached list if the game already loaded it this session
     auto glm = GameLevelManager::get();
-    if (auto stored = glm->getStoredUserList(UserListType::Friends)) {
+    if (auto stored = glm_compat::getStoredUserList(UserListType::Friends)) {
         this->populate(stored);
     } else {
         this->m_spinner->setVisible(true);
