@@ -364,7 +364,7 @@ bool NewWhitelistUserPopup::init(WhitelistPopup* popup) {
     auto friendsButton = geode::Button::createWithNode(
         ButtonSprite::create("Friends", "goldFont.fnt", "GJ_button_04.png", 1),
         [this](geode::Button* button) {
-            FriendPickerPopup::create([this](GJUserScore* score) {
+            CMFriendPickerPopup::create([this](GJUserScore* score) {
                 this->fillFromScore(score);
             })->show();
         }
@@ -549,8 +549,8 @@ void NewWhitelistUserPopup::getUserInfoFailed(int id) {
 
 //Friend picker
 
-FriendPickerPopup* FriendPickerPopup::create(std::function<void(GJUserScore*)> callback) {
-    auto ret = new FriendPickerPopup();
+CMFriendPickerPopup* CMFriendPickerPopup::create(std::function<void(GJUserScore*)> callback) {
+    auto ret = new CMFriendPickerPopup();
     if (ret->init(std::move(callback))) {
         ret->autorelease();
         return ret;
@@ -559,12 +559,12 @@ FriendPickerPopup* FriendPickerPopup::create(std::function<void(GJUserScore*)> c
     return nullptr;
 }
 
-FriendPickerPopup::~FriendPickerPopup() {
+CMFriendPickerPopup::~CMFriendPickerPopup() {
     auto glm = GameLevelManager::get();
     if (glm->m_userListDelegate == this) glm->m_userListDelegate = nullptr;
 }
 
-bool FriendPickerPopup::init(std::function<void(GJUserScore*)> callback) {
+bool CMFriendPickerPopup::init(std::function<void(GJUserScore*)> callback) {
     if (!geode::Popup::init({300, 250})) return false;
 
     this->setID("friend-picker-popup"_spr);
@@ -627,13 +627,13 @@ bool FriendPickerPopup::init(std::function<void(GJUserScore*)> callback) {
     return true;
 }
 
-void FriendPickerPopup::showMessage(std::string const& message) {
+void CMFriendPickerPopup::showMessage(std::string const& message) {
     this->m_spinner->setVisible(false);
     this->m_messageLabel->setString(message.c_str());
     this->m_messageLabel->setVisible(true);
 }
 
-void FriendPickerPopup::populate(CCArray* friends) {
+void CMFriendPickerPopup::populate(CCArray* friends) {
     this->m_spinner->setVisible(false);
 
     auto content = this->m_scrollLayer->m_contentLayer;
@@ -699,7 +699,7 @@ void FriendPickerPopup::populate(CCArray* friends) {
     this->m_scrollbar->setVisible(totalHeight > this->m_scrollLayer->getContentHeight());
 }
 
-void FriendPickerPopup::getUserListFinished(CCArray* scores, UserListType type) {
+void CMFriendPickerPopup::getUserListFinished(CCArray* scores, UserListType type) {
     if (type != UserListType::Friends) return;
 
     auto glm = GameLevelManager::get();
@@ -708,7 +708,7 @@ void FriendPickerPopup::getUserListFinished(CCArray* scores, UserListType type) 
     this->populate(scores);
 }
 
-void FriendPickerPopup::getUserListFailed(UserListType type, GJErrorCode errorType) {
+void CMFriendPickerPopup::getUserListFailed(UserListType type, GJErrorCode errorType) {
     if (type != UserListType::Friends) return;
 
     auto glm = GameLevelManager::get();

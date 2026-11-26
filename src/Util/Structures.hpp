@@ -10,12 +10,6 @@ using namespace geode::prelude;
 
 
 
-
-
-
-
-
-
 struct BannedWord {
     std::string m_word = "";
     bool m_enabled = true;
@@ -47,10 +41,6 @@ struct matjson::Serialize<BannedWord> {
         });
     }
 };
-
-
-
-
 
 
 
@@ -227,9 +217,6 @@ struct CustomCommentData {
         this->m_unixDate = now - amount * seconds;
     }
 };
-
-
-
 
 
 

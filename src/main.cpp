@@ -9,8 +9,6 @@ using namespace geode::prelude;
 #include "Comments/QueueVisualizer.hpp"
 
 $on_mod(Loaded) {
-    
-
     CommentManager::get()->loadPersistentQueue();
     CommentManager::get()->QueueHandle = async::spawn(CommentManager::get()->processQueue());
     log::info("Starting Comment Manager Queue");

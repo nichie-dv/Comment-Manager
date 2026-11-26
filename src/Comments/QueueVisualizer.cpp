@@ -101,7 +101,7 @@ bool QueueVisualizerEntry::init(LevelCommentOptions data) {
 
 
     //Make sure this isnt visible until its current in the queue
-    this->m_progressBar = geode::ProgressBar::create(ProgressBarStyle::Level);
+    this->m_progressBar = geode::ProgressBar::create(geode::ProgressBar::Style::Level);
     this->m_progressBar->setID("comment-progress-bar");
     this->m_progressBar->setZOrder(10);
     this->m_progressBar->setLayout(AnchorLayout::create());

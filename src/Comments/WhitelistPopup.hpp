@@ -90,11 +90,11 @@ protected:
 
 
 //Friends picker popup
-
-class FriendPickerPopup : public geode::Popup, public UserListDelegate {
+//Thanks robtop (claude) for STEALING MY CLASS NAME!!!!!
+class CMFriendPickerPopup : public geode::Popup, public UserListDelegate {
 public:
-    static FriendPickerPopup* create(std::function<void(GJUserScore*)> callback);
-    ~FriendPickerPopup() override;
+    static CMFriendPickerPopup* create(std::function<void(GJUserScore*)> callback);
+    ~CMFriendPickerPopup() override;
 
 protected:
     bool init(std::function<void(GJUserScore*)> callback);

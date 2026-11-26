@@ -15,7 +15,7 @@ using namespace geode::prelude;
 #include <cctype>
 #include <ctime>
 #include <filesystem>
-#include <fstream>
+#include <asp/fs/File.hpp>
 #include <fmt/chrono.h>
 #include <regex>
 
@@ -540,8 +540,6 @@ void CommentManager::savePersistentQueue() {
 }
 
 void CommentManager::loadPersistentQueue() {
-    auto& saved = Mod::get()->getSaveContainer();
-
     auto list = Mod::get()->getSavedValue<matjson::Value>("queue");
     if (!list.isArray()) return;
 
@@ -644,36 +642,43 @@ arc::Future<void> CommentManager::processQueue() {
 
 
 
-namespace {
-    //ex: "2026-09-27 17:29:15"
-    std::string logTimestamp() {
-        std::time_t now = std::time(nullptr);
-        std::tm local{};
+//ex: "2026-09-27 17:29:15"
+static std::string logTimestamp() {
+    std::time_t now = std::time(nullptr);
+    std::tm local{};
 
-        #ifdef GEODE_IS_WINDOWS
-        localtime_s(&local, &now);
-        #else
-        localtime_r(&now, &local);
-        #endif
-        
-        return fmt::format("{:%Y-%m-%d %H:%M:%S}", local);
+    #ifdef GEODE_IS_WINDOWS
+    localtime_s(&local, &now);
+    #else
+    localtime_r(&now, &local);
+    #endif
+    
+    return fmt::format("{:%Y-%m-%d %H:%M:%S}", local);
+}
+
+//keeps one file per level
+static void appendCommentLog(int levelID, std::string const& line) {
+    auto dir = Mod::get()->getSaveDir() / "logs";
+    if (auto res = file::createDirectoryAll(dir); !res) {
+        log::warn("Couldn't create the comment log folder: {}", res.unwrapErr());
+        return;
     }
 
-    //keeps one file per level
-    void appendCommentLog(int levelID, std::string const& line) {
-        auto dir = Mod::get()->getSaveDir() / "logs";
-        if (auto res = file::createDirectoryAll(dir); !res) {
-            log::warn("Couldn't create the comment log folder: {}", res.unwrapErr());
-            return;
-        }
+    asp::fs::OpenOptions opts{};
+    opts.read = false;
+    opts.write = true;
+    opts.append = true;
+    opts.create = true;
 
-        //Geode's file utils can only overwrite, so append with a plain stream
-        std::ofstream file(dir / fmt::format("{}.txt", levelID), std::ios::app);
-        if (!file) {
-            log::warn("Couldn't open the comment log for level {}", levelID);
-            return;
-        }
-        file << line << '\n';
+    auto res = asp::fs::File::open(dir / fmt::format("{}.txt", levelID), opts);
+    if (!res) {
+        log::warn("Couldn't open the comment log for level {}: {}", levelID, res.unwrapErr());
+        return;
+    }
+
+    auto file = std::move(res).unwrap();
+    if (auto written = file.writeAll(line + '\n'); !written) {
+        log::warn("Couldn't write to the comment log for level {}: {}", levelID, written.unwrapErr());
     }
 }
 
@@ -720,7 +725,7 @@ public:
 
         //Date range
         if (this->m_options.m_useDates) {
-            if (unixDate == 0) return std::nullopt; //Couldn't read the date, play it safe
+            if (unixDate == 0) return std::nullopt; //Couldn't read the date
             if (this->m_options.m_startDate && unixDate < this->m_options.m_startDate) return std::nullopt;
             if (this->m_options.m_endDate && unixDate > this->m_options.m_endDate) return std::nullopt;
         }

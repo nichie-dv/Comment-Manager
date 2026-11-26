@@ -6,6 +6,8 @@ Allows you to <cr>mass delete</c> comments from your levels based on a given cri
 
 Also adds a global keybind (default is `control + k`) to view the queue of levels to delete comments from, or you can access from the button near the daily chest in the main menu.
 
+Button has moved to Creator Settings menu (reload button looking thing on your level page)
+
 ## Features
 
 ### Basic:
